@@ -4,117 +4,53 @@ Lightweight Linux tuning project focused on improving system responsiveness and 
 ---
 
 ## Overview
-Project ini merupakan hasil eksperimen dalam mencoba memahami dan mengoptimasi cara kerja sistem Linux, khususnya pada bagian memory management dan system behavior saat digunakan secara intensif.
+Projek ini merupakan hasil eksperimen dalam mencoba memahami dan mengoptimasi cara kerja sistem Linux, khususnya pada bagian memory management dan system behavior saat digunakan secara intensif.
+Projek ini berangkat dari masalah sederhana :
 
-Kasus awal :
-- sering trash setelah beberapa waktu menjalankan Virtual Machine
-- terkadang sistem terasa berat walaupun RAM masih tersedia
-- multitasking tidak stabil
+- Sistem terasa berat setelah menjalankan Virtual Machine
+- Kadang terjadi stutter walaupun RAM masih tersedia
+- Multitasking tidak stabil dalam jangka waktu tertentu
 
-Dari situ, dilakukan tuning secara bertahap sambil memahami efek dari tiap parameter.
+Dari situ, dilakukan eksplorasi terhadap bagaimana Linux mengelola memory, swap, dan I/O, lalu dicoba beberapa penyesuaian untuk melihat dampaknya.
+Perlu diketahui bahwa, project ini bukan tentang mencari setting paling optimal. Tapi lebih ke memahami behavior sistem dan mengarahkannya sesuai kebutuhan.
 
 ---
 
 ## What this project does?
-- Mengoptimasi penggunaan RAM dan swap
 - Mengurangi stutter saat multitasking
+- Mengoptimasi penggunaan RAM dan swap
 - Meningkatkan respons sistem saat memory pressure
-- Menyediakan konfigurasi yang lebih stabil untuk workload development
+- Menyesuaikan behavior Linux untuk workload development
 
 ---
 
-## Core Tuning
+## Core Idea
+Tuning difokuskan pada beberapa area utama :
+
+- Memory management (RAM & swap behavior)
+- ZRAM sebagai swap utama
+- Writeback control untuk mengurangi spike I/O
+- Overcommit untuk fleksibilitas alokasi memori
+- System limits untuk kebutuhan tools modern
+
+Detail teknis dan alasan di balik setiap keputusan dijelaskan di : ARSITECTURE.md
 
 ---
 
-### Memory Management
-
-vm.swappiness=20
-
-vm.vfs_cache_pressure=50
-
-vm.page-cluster=0
-
-Keterangan : 
-- Swappiness diturunkan agar sistem tidak terlalu cepet swap
-- Cache pressure dikurangi untuk mempertahankan file cache
-- Page-cluster di-set 0 untuk meningkatkan respons saat swap
-
-Penjelasan lebih lanjut : 
-- Swappines di-set menjadi 20. Default (60) terlalu agresif dalam menggunakan swap. Nilai ini dipilih agar sistem lebih lama bertahan di RAM sebelum swap digunakan.
-- Cache pressure dikurangi menjadi 50. Digunakan untuk mempertahankan file cache lebih lama, sehingga akses file terasa lebih cepat.
-- Page-cluster di-set 0 untuk mengurangi jumlah page yang dibaca sekaligus dari swap, sehingga respons terasa lebih cepat pada workload kecil.
-
-----
-
-### ZRAM Configuration
-
-- Menggunakan ZRAM sebagai swap utama
-- Size kurang lebih 50% dari RAM
-- Prioritas lebih tinggi dari disk swap
-
-Tujuan :
-- Mengurangi ketergantungan pada disk I/O
-- Menjaga performa saat RAM mulai penuh
-
-Catatan : ZRAM tidak benar-benar menambah kapasitas memori, tetapi mengompresi data di RAM. Efeknya membantu, tetapi tetap ada batasnya saat workload terlalu berat.
-
-----
-
-### Writeback Control
-
-vm.dirty_ratio=15
-
-vm.dirty_background_ratio=5
-
-Penjelasan : 
-Untuk mengurangi lonjakan penulisan ke disk yang bisa menyebabkan stutter, karena :
-- Nilai terlalu besar dapat membuat penulisan menumpuk dan bisa menyebabkan lag
-- Nilai lebih kecil dapat membuat penulisan lebih sering, namun lebih ringan
-
-----
-
-### Memory Overcommit
-
-vm.overcommit_memory=1
-
-vm.overcommit_ratio=80
-
-Penjelasan :
-Untuk memberikan fleksibilitas lebih dalam alokasi memori, terutama untuk VM (Program berat lainnya). Namun, konfigurasi ini masih dalam tahap eksplorasi karena berpotensi menyebabkan over-allocation jika tidak terkontrol.
-
-----
-
-### Developer Limits
-
-- File descriptor limit dinaikkan
-- Process limit dinaikkan
-- Inotify watchers dinaikkan
-
-Alasan :
-Tools modern seperti VS Code, Node.js, dan berbagai tools development lainnya sering membuka banyak file dan process secara bersamaan.
-
----
-
-## Observed Behavior
-
-Before Tuning :
-- Setiap kali menggunakan VM + Firefox berjalan bersaman, sistem terasa lag
-- Terkadang terjadi freeze ringan
-
-After Tuning :
-- Sistem terasa lebih stabil saat multitasking
-- Tidak langsung freeze, lebih jarang terjadi.
-
-Catatan :
-- Saat workload terlalu berat, sistem tetap mencapai limit
-- ZRAM hanya membantu menunda bottleneck, bukan menghilangkan.
+## Project Structure
+- README.md : Penjelasan utama project.
+- ARCHITECTURE.md : Penjelasan desain sistem, alasan tuning, dan analisis.
+- INSTALLATION.md : Panduan instalasi dan cara penggunaan.
+- LICENSE : Lisensi penggunaan projek.
+- sysctl/99-workstation-optimizer.conf : Berisi parameter tuning kernel.
+- script/apply-tuning.sh : Script untuk menerapkan konfigurasi secara otomatis.
 
 ---
 
 ## Testing Scenario
+Testing dilakukan dalam konteks penggunaan real, bukan synthetic benchmark.
 
-Digunakan pada :
+Sistem yang digunakan :
 - Ubuntu
 - RAM 16GB
 - ZRAM aktif
@@ -126,8 +62,45 @@ Workload :
 
 ---
 
-## Notes
+## Skenario Penggunaan
+Simulasi workload yang mendekati kondisi sehari-hari :
 
-- Konfigurasi ini bukan "paling optimal", tapi hasil dari eksperimen
-- Efek bisa berbeda tergantung sistem
-- Beberapa parameter masih dalam tahap eksplorasi/pemahaman.
+- Menjalankan Virtual Machine dalam waktu lama
+- Membuka browser dengan multiple tabs (10+)
+- Aktivitas development di terminal (editing, running, process, dll)
+
+Semua berjalan secara bersamaan untuk menciptakan kondisi memory pressure.
+
+---
+
+## Fokus Pengujian
+Pengamatan difokuskan pada beberapa hal :
+
+- Respons sistem saat RAM mulai penuh
+- Perilaku swap (apakah terlalu cepat / terlalu lambat)
+- Stabilitas multitasking dalam durasi panjang
+- Adanya stutter atau tidak saat switching workload
+
+---
+
+## Observasi Umum
+Setelah tuning diterapkan :
+
+- Sistem terasa lebih responsif saat multitasking
+- Penggunaan swap menjadi lebih terkontrol
+- Stutter berkurang dibanding sebelum tuning
+- Sistem lebih stabil dalam penggunaan jangka waktu lama
+
+---
+
+## Notes
+- Konfigurasi ini bukan universal best config
+- Efek bisa berbeda tergantung hardware dan workload
+- Beberapa parameter masih dalam tahap eksplorasi
+
+---
+
+## Final Thoughts
+Projek ini lebih ke arah eksplorasi dan pemahaman sistem, bukan apply-tweak saja. Karena pada akhirnya, tuning bukan soal angka saja, tapi juga soal mengerti bagaimana sistem bereaksi terhadap perubahan.
+
+
