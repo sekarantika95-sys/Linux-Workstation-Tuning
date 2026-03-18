@@ -62,7 +62,7 @@ Workload :
 
 ---
 
-## Skenario Penggunaan
+## Usage Scenarios
 Simulasi workload yang mendekati kondisi sehari-hari :
 
 - Menjalankan Virtual Machine dalam waktu lama
@@ -73,7 +73,7 @@ Semua berjalan secara bersamaan untuk menciptakan kondisi memory pressure.
 
 ---
 
-## Fokus Pengujian
+## Testing Focus
 Pengamatan difokuskan pada beberapa hal :
 
 - Respons sistem saat RAM mulai penuh
@@ -83,7 +83,7 @@ Pengamatan difokuskan pada beberapa hal :
 
 ---
 
-## Observasi Umum
+## General Observations
 Setelah tuning diterapkan :
 
 - Sistem terasa lebih responsif saat multitasking
