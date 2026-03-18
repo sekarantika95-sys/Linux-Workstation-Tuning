@@ -25,16 +25,19 @@ Dari situ, dilakukan Tuning secara bertahap sambil memahami efek dari tiap param
 
 ## Core Tuning
 
+---
+
 ### Memory Management
 
-```bash
 vm.swappiness=20
 vm.vfs_cache_pressure=50
-vm.page-cluster=0```
+vm.page-cluster=0
 
 - Swappiness diturunkan agar sistem tidak terlalu cepet swap
 - Cache pressure dikurangi untuk mempertahankan file cache
 - Page-cluster di-set 0 untuk meningkatkan respons saat swap
+
+---
 
 ### ZRAM Configuration
 
@@ -46,17 +49,15 @@ Tujuannya adalah untyk menjaga performa saat RAM mulai penuh dan menghindari bot
 
 ### Writeback Control
 
-```bash
 vm.dirty_ratio=15
-vm.dirty_background_ratio=5```
+vm.dirty_background_ratio=5
 
 Untuk mengurangi lonjakan penulisan ke disk yang bisa menyebabkan stutter.
 
 ### Memory Overcommit
 
-```bash
 vm.overcommit_memory=1
-vm.overcommit_ratio=80```
+vm.overcommit_ratio=80
 
 Untuk memberikan fleksibilitas lebih dalam alokasi memori, terutama untuk VM.
 
@@ -71,9 +72,6 @@ Menyesuaikan dengan kebutuhan tools modern yang membuka banyak file/process.
 ### Usage
 
 Apply sysctl config:
-
-```bash
-sudo cp sysctl/99-workstation-optimizer.conf /etc/sysctl --system```
 
 ### Testing Scenario
 
