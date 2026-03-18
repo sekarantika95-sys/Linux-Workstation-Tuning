@@ -25,6 +25,8 @@ Dari situ, dilakukan tuning secara bertahap sambil memahami efek dari tiap param
 
 ## Core Tuning
 
+---
+
 ### Memory Management
 
 vm.swappiness=20
@@ -43,6 +45,8 @@ Penjelasan lebih lanjut :
 - Cache pressure dikurangi menjadi 50. Digunakan untuk mempertahankan file cache lebih lama, sehingga akses file terasa lebih cepat.
 - Page-cluster di-set 0 untuk mengurangi jumlah page yang dibaca sekaligus dari swap, sehingga respons terasa lebih cepat pada workload kecil.
 
+----
+
 ### ZRAM Configuration
 
 - Menggunakan ZRAM sebagai swap utama
@@ -55,6 +59,8 @@ Tujuan :
 
 Catatan : ZRAM tidak benar-benar menambah kapasitas memori, tetapi mengompresi data di RAM. Efeknya membantu, tetapi tetap ada batasnya saat workload terlalu berat.
 
+----
+
 ### Writeback Control
 
 vm.dirty_ratio=15
@@ -66,6 +72,8 @@ Untuk mengurangi lonjakan penulisan ke disk yang bisa menyebabkan stutter, karen
 - Nilai terlalu besar dapat membuat penulisan menumpuk dan bisa menyebabkan lag
 - Nilai lebih kecil dapat membuat penulisan lebih sering, namun lebih ringan
 
+----
+
 ### Memory Overcommit
 
 vm.overcommit_memory=1
@@ -74,6 +82,8 @@ vm.overcommit_ratio=80
 
 Penjelasan :
 Untuk memberikan fleksibilitas lebih dalam alokasi memori, terutama untuk VM (Program berat lainnya). Namun, konfigurasi ini masih dalam tahap eksplorasi karena berpotensi menyebabkan over-allocation jika tidak terkontrol.
+
+----
 
 ### Developer Limits
 
@@ -94,7 +104,7 @@ Before Tuning :
 
 After Tuning :
 - Sistem terasa lebih stabil saat multitasking
-- Tidak langsung Freeze, lebih jarang terjadi.
+- Tidak langsung freeze, lebih jarang terjadi.
 
 Catatan :
 - Saat workload terlalu berat, sistem tetap mencapai limit
@@ -118,6 +128,6 @@ Workload :
 
 ## Notes
 
-- Konfigurasi ini bukan "paling optimal", tapi hasi dari eksperimen
+- Konfigurasi ini bukan "paling optimal", tapi hasil dari eksperimen
 - Efek bisa berbeda tergantung sistem
 - Beberapa parameter masih dalam tahap eksplorasi/pemahaman.
